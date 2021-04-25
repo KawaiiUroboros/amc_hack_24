@@ -2,6 +2,7 @@
 import { Text, View, StyleSheet, Animated,FlatList, TouchableOpacity } from 'react-native';
 import Constants from 'expo-constants';
 import * as React from 'react';
+import { Audio } from 'expo-av';
 import { useState, useEffect,Button } from 'react';
 import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
 import {ExpoScanner} from './ExpoScanner'
@@ -11,7 +12,25 @@ export default function App() {
   const [s, sets] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
+  const [sound, setSound] = React.useState();
 
+  async function playSound() {
+    console.log('Loading Sound');
+    const { sound } = await Audio.Sound.createAsync(
+       require('./assets/m.mp3')
+    );
+    setSound(sound);
+
+    console.log('Playing Sound');
+    await sound.playAsync(); }
+
+  React.useEffect(() => {
+    return sound
+      ? () => {
+          console.log('Unloading Sound');
+          sound.unloadAsync(); }
+      : undefined;
+  }, [sound]);
   useEffect(() => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -36,11 +55,13 @@ export default function App() {
     <View style={styles.container}>
       {t&&!s&&(<CountdownCircleTimer
         isPlaying
-        duration={60}
+        duration={10}
+        onComplete={() => {playSound();alert("your time over")}}
         colors={[
           ['#004777', 0.4],
           ['#F7B801', 0.4],
           ['#A30000', 0.2],
+          
         ]}
     >
       {({ remainingTime, animatedColor }) => (
